@@ -31,7 +31,7 @@ variance=variance/((len(data['Close'].to_numpy()))-1)
 volatility=np.sqrt(variance*252)
 #print(volatility,'volatliity')
 r=0.045
-max_price=1.2*close_prices[-1]
+max_price=2*close_prices[-1]
 #print(max_price,'max_price')
 total_exercise_time=1/48
 time_step=4
@@ -44,7 +44,7 @@ vi1=0
 vt2=np.zeros((time_step,price_step))
 vt3=np.zeros((time_step,price_step))
 print(yf.Ticker(stc).options[0],"expiration")
-K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][0]
+K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][2]
 print(K,'K')
 v_i=0
 vi1=max(price_dif-K,0)
@@ -80,7 +80,7 @@ for j in range(0,price_step-2):
 		#print(u[q,:],"u", q)
 	#print(u,'u')
 	z=np.linalg.det(u)
-	#print(z,'z')
+	print(z,'z')
 	g=np.linalg.inv(u)
 	h=np.matmul(np.matmul(g,f),d)
 	vt2[:,price_step-j-2]=h
@@ -119,12 +119,32 @@ ax.set_zlabel('Z Axis')
 ax.set_title('3D Surface Plot')
 #print(max_price)
 # 5. Show the plot
-plt.show()
+#plt.show()
 #print(np.argwhere(x>=10*time_dif)[0],np.argwhere(y>=(25)*price_dif)[0])
-print(y[np.argwhere(y>=(price_step/2)*price_dif)[0]+1],'spot price')
-interpolator=interp1d(y,vt2[np.argwhere(x>=(time_step/2)*time_dif)[0],:],kind='cubic')
+print(vt2[1,:],'option price')
+def lagrange(x,y,stockprice):
+	u=1
+	for y2 in range(0,len(x)):
+		u*=(stockprice-x[y2])
+	#print(u,'u')
+	def l3(x,index):
+		#print(x,'x')
+		w=1
+		for m in range(0,len(x)):
+			if m!=index:
+				w*=1/(x[index]-x[m])
+			else:
+				w=w
+		return w 
+	z1=0
+	for l2 in range(0,len(x)):
+		#print(l3(x,l2),'w')
+		if stockprice!=x[l2]:
+			z1+=y[l2]*l3(x,l2)*(1/(stockprice-x[l2]))
+	#print(z1,'z1')
+	return z1*u
 spotprice=yf.Ticker(stc).fast_info.last_price
-Current_price=max(interpolator(spotprice),max(spotprice-K,0))
+Current_price=lagrange(y,vt2[1,:],spotprice)
 print(spotprice,'current price')
 #print(vt2[np.argwhere(x>=(time_step/2)*time_dif)[0],np.argwhere(y>=(price_step/2)*price_dif)[0]+1],"current option price")
 print(Current_price,'current option price')
