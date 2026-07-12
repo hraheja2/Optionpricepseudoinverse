@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import numpy.linalg as la 
 from scipy.linalg import lu
-stc=input("Enter TICKR(In caps)")
+from scipy.interpolate import interp1d
+stc=input("Enter TICKR (In caps)")
 data =yf.download(stc,start="2026-01-01", end ="2027-07-01")
 #print(data)
 #print(data['Close'].to_numpy(),"values")
@@ -30,9 +31,9 @@ variance=variance/((len(data['Close'].to_numpy()))-1)
 volatility=np.sqrt(variance*252)
 #print(volatility,'volatliity')
 r=0.045
-max_price=1.5*close_prices[-1]
+max_price=1.2*close_prices[-1]
 #print(max_price,'max_price')
-total_exercise_time=1/12
+total_exercise_time=1/48
 time_step=4
 price_step=4
 time_dif=(total_exercise_time/(time_step))
@@ -42,6 +43,7 @@ vi2=0
 vi1=0
 vt2=np.zeros((time_step,price_step))
 vt3=np.zeros((time_step,price_step))
+print(yf.Ticker(stc).options[0],"expiration")
 K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][0]
 print(K,'K')
 v_i=0
@@ -117,6 +119,12 @@ ax.set_zlabel('Z Axis')
 ax.set_title('3D Surface Plot')
 #print(max_price)
 # 5. Show the plot
-#plt.show()
+plt.show()
 #print(np.argwhere(x>=10*time_dif)[0],np.argwhere(y>=(25)*price_dif)[0])
-print(vt2[np.argwhere(x>=time_step/2*time_dif)[0],np.argwhere(y>=(price_step/2)*price_dif)[0]],"current option price")
+print(y[np.argwhere(y>=(price_step/2)*price_dif)[0]+1],'spot price')
+interpolator=interp1d(y,vt2[np.argwhere(x>=(time_step/2)*time_dif)[0],:],kind='cubic')
+spotprice=yf.Ticker(stc).fast_info.last_price
+Current_price=max(interpolator(spotprice),max(spotprice-K,0))
+print(spotprice,'current price')
+#print(vt2[np.argwhere(x>=(time_step/2)*time_dif)[0],np.argwhere(y>=(price_step/2)*price_dif)[0]+1],"current option price")
+print(Current_price,'current option price')
