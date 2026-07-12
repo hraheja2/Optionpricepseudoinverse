@@ -33,9 +33,9 @@ volatility=np.sqrt(variance*252)
 r=0.045
 max_price=2*close_prices[-1]
 #print(max_price,'max_price')
-total_exercise_time=1/48
-time_step=4
-price_step=4
+total_exercise_time=1/12
+time_step=40
+price_step=40
 time_dif=(total_exercise_time/(time_step))
 price_dif=(max_price)/price_step
 v_i=0
@@ -44,7 +44,7 @@ vi1=0
 vt2=np.zeros((time_step,price_step))
 vt3=np.zeros((time_step,price_step))
 print(yf.Ticker(stc).options[0],"expiration")
-K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][2]
+K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][0]
 print(K,'K')
 v_i=0
 vi1=max(price_dif-K,0)
@@ -59,30 +59,33 @@ y=np.linspace(0,max_price,price_step)
 for j in range(0,price_step-2):
 	#for i in range(0,time_step-2):
 	a=(0.5*r*(j+1)*time_dif)-(0.5*(volatility**2)*((j+1)**2)*time_dif)
-	b=1+((volatility**2)*((j+1)**2)*time_dif)+(r*time_dif)
+	b=1+((volatility**2)*((j+1)**2)*time_dif)#+(r*time_dif)
 	c=(-0.5*r*(j+1)*time_dif)-(0.5*(volatility**2)*((j+1)**2)*time_dif)
 	d=vt2[:-1,price_step-j-1]
+	#print(d,'d')
 	e=np.zeros((time_step-1,price_step))
-	print(a,b,c,'abc')
+	#print(a,b,c,'abc')
 	e[0,0]=a
 	e[0,1]=b
 	e[0,2]=c
 	for l in range(1,price_step-1):
-		e[l,l-1]=a
-		e[l,l]=b
-		e[l,l+1]=c
-	#print(e[0,1],e[1,1])
+		e[l,l-1]=a/(1-r*(time_dif))
+		e[l,l]=b/(1-r*(time_dif))
+		e[l,l+1]=c/(1-r*(time_dif))
+	#print(e,'e')
+	g=la.pinv(e)
 	f=np.transpose(e)
 	#print(f,'f')
-	u=np.matmul(f,e)
+	#u=np.matmul(f,e)
 	#print(u,'u')
 	#for q in range(0,price_step-1):
 		#print(u[q,:],"u", q)
 	#print(u,'u')
-	z=np.linalg.det(u)
-	print(z,'z')
-	g=np.linalg.inv(u)
-	h=np.matmul(np.matmul(g,f),d)
+	#z=np.linalg.det(u)
+	#print(z,'z')
+	#g=np.linalg.inv(u)
+	#print(g,'g')
+	h=np.matmul(g,d)
 	vt2[:,price_step-j-2]=h
 		#print(a,'a')
 		#print(b,'b')
@@ -121,7 +124,7 @@ ax.set_title('3D Surface Plot')
 # 5. Show the plot
 #plt.show()
 #print(np.argwhere(x>=10*time_dif)[0],np.argwhere(y>=(25)*price_dif)[0])
-print(vt2[1,:],'option price')
+#print(vt2[1,:],'option price')
 def lagrange(x,y,stockprice):
 	u=1
 	for y2 in range(0,len(x)):
