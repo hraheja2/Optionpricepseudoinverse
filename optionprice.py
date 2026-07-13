@@ -28,14 +28,14 @@ for i in range(len(data['Close'].to_numpy())):
 	variance+= (returns[i]-mean)**2
 variance=variance/((len(data['Close'].to_numpy()))-1)
 #print(variance,'variance')
-volatility=np.sqrt(variance*252)
+volatility=np.sqrt(variance)
 #print(volatility,'volatliity')
 r=0.045
 max_price=2*close_prices[-1]
 #print(max_price,'max_price')
-total_exercise_time=1/12
-time_step=40
-price_step=40
+total_exercise_time= 90
+time_step=90
+price_step=90
 time_dif=(total_exercise_time/(time_step))
 price_dif=(max_price)/price_step
 v_i=0
@@ -43,8 +43,9 @@ vi2=0
 vi1=0
 vt2=np.zeros((time_step,price_step))
 vt3=np.zeros((time_step,price_step))
-print(yf.Ticker(stc).options[0],"expiration")
-K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[0]).calls['strike'][0]
+ep=1
+print(yf.Ticker(stc).options[ep],"expiration")
+K=yf.Ticker(stc).option_chain(yf.Ticker(stc).options[ep]).calls['strike'][0]
 print(K,'K')
 v_i=0
 vi1=max(price_dif-K,0)
@@ -147,7 +148,7 @@ def lagrange(x,y,stockprice):
 	#print(z1,'z1')
 	return z1*u
 spotprice=yf.Ticker(stc).fast_info.last_price
-Current_price=lagrange(y,vt2[1,:],spotprice)
+Current_price=lagrange(y,vt2[int(input("Enter period number(Since 1 July)")),:],spotprice)
 print(spotprice,'current price')
 #print(vt2[np.argwhere(x>=(time_step/2)*time_dif)[0],np.argwhere(y>=(price_step/2)*price_dif)[0]+1],"current option price")
 print(Current_price,'current option price')
