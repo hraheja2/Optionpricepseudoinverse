@@ -7,7 +7,8 @@ from scipy.interpolate import interp1d
 import tkinter as tk
 import pandas as pd 
 import pyautogui
-from openpyxl import Workbook,load_workbook 
+from openpyxl import Workbook,load_workbook
+import ttkbootstrap 
 def autofill_fields():
 	df=pd.read_excel("/Users/harshitraheja/Desktop/Tickr.xlsx")
 	first_row=df.iloc[0]
@@ -20,29 +21,34 @@ def autofill_fields():
 		entry3.insert(0,int(rows['expiration']))
 		entry4.delete(0,tk.END)
 		entry4.insert(0,int(rows['actual_exercise_duration']))
+		entry5.delete(0,tk.END)
+		entry5.insert(0,int(rows['Expected_price']))
 		stc=entry1.get()
 		ep=entry3.get()
 		aed=entry4.get()
 		total_exercise_time=entry2.get()
-		option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time)[0]))
+		spotprice=entry5.get()
+		option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,spotprice)))
 		text1.set("Option Price")
-		stock_price1.set( option_price_calculator(stc,ep,aed,total_exercise_time)[1])
-		text2.set("Stock Price")
+		stock_price1.set(int(yf.Ticker(str((stc))).fast_info.last_price))
+		text2.set("Current Stock Price")
 		wb=load_workbook("/Users/harshitraheja/Desktop/Tickr.xlsx")
 		ws=wb.active
-		ws.cell(row=index+2,column=5,value=option_price1.get())
-		ws.cell(row=index+2,column=6,value=stock_price1.get())
+		ws.cell(row=index+2,column=6,value=option_price1.get())
+		ws.cell(row=index+2,column=7,value=stock_price1.get())
 		wb.save("/Users/harshitraheja/Desktop/Tickr.xlsx")
 root=tk.Tk()
 stc=tk.StringVar()
 ep=tk.IntVar()
 aed=tk.IntVar()
 total_exercise_time=tk.IntVar()
+spotprice=tk.IntVar()
 root.title("Call Option Price Calculator")
 tk.Label(root,text="TICKR").pack()
 tk.Label(root,text="Time to exercise(In days from 1st July)").pack()
 tk.Label(root,text="Expiration").pack()
 tk.Label(root,text="Date of actual exercise").pack()
+tk.Label(root,text="Expected price").pack()
 entry1=tk.Entry(root,textvariable=stc)
 entry1.pack()
 entry2=tk.Entry(root,textvariable=total_exercise_time)
@@ -51,7 +57,9 @@ entry4=tk.Entry(root,textvariable=aed)
 entry2.pack()
 entry3.pack()
 entry4.pack()
-def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time:Object):
+entry5=tk.Entry(root,textvariable=spotprice)
+entry5.pack()
+def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time:Object,spotprice: int):
 	data =yf.download(str(stc),start="2026-01-01", end ="2027-07-01")
 	close_prices=(np.zeros(len(data['Close'].to_numpy())))
 	open_prices=(np.zeros(len(data[['Close']].to_numpy())))
@@ -113,9 +121,9 @@ def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time
 		
 	def lagrange(x,y,stockprice):
 		u=1
+		stockprice=float(stockprice)
 		for y2 in range(0,len(x)):
 			u*=(stockprice-x[y2])
-		#print(u,'u')
 		def l3(x,index):
 			#print(x,'x')
 			w=1
@@ -130,13 +138,14 @@ def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time
 			if stockprice!=x[l2]:
 				z1+=y[l2]*l3(x,l2)*(1/(stockprice-x[l2]))
 		return z1*u
-	spotprice=yf.Ticker(str((stc))).fast_info.last_price
+	#spotprice=yf.Ticker(str((stc))).fast_info.last_price
 	Current_price=lagrange(y,vt2[int(aed),:], spotprice)
-	return Current_price, spotprice
+	return Current_price
 stock_price1=tk.IntVar()
 option_price1=tk.IntVar()
 text1=tk.StringVar()
 text2=tk.StringVar()
+text3=tk.StringVar()
 output_label = tk.Label(root, textvariable=stock_price1, font=("Arial", 14))
 output_label.pack(pady=10)
 output_label2 = tk.Label(root, textvariable=option_price1, font=("Arial", 14))
@@ -150,15 +159,16 @@ def submit_data():
 	stc=entry1.get()
 	ep=entry3.get()
 	aed=entry4.get()
+	spotprice=entry5.get()
 	total_exercise_time=entry2.get()
-	option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time)[0]))
+	option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,spotprice)))
 	text1.set("Option Price")
-	stock_price1.set( option_price_calculator(stc,ep,aed,total_exercise_time)[1])
-	text2.set("Stock Price")
+	stock_price1.set(int(yf.Ticker(str((stc))).fast_info.last_price))
+	text2.set("Current Stock Price")
 	wb=load_workbook("/Users/harshitraheja/Desktop/Tickr.xlsx")
 	ws=wb.active
-	ws.cell(row=2,column=5,value=option_price1.get())
-	ws.cell(row=2,column=6,value=stock_price1.get())
+	ws.cell(row=2,column=6,value=option_price1.get())
+	ws.cell(row=2,column=7,value=stock_price1.get())
 	wb.save("/Users/harshitraheja/Desktop/Tickr.xlsx")
 button = tk.Button(root, text="Check Option Price", width=30, command=submit_data).pack()
 button2 = tk.Button(root, text="Autofill", width=30, command=autofill_fields).pack()
