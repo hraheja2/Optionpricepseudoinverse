@@ -7,36 +7,6 @@ from scipy.interpolate import interp1d
 import tkinter as tk
 import pandas as pd 
 import pyautogui
-from openpyxl import Workbook,load_workbook
-import ttkbootstrap 
-def autofill_fields():
-	df=pd.read_excel("/Users/harshitraheja/Desktop/Tickr.xlsx")
-	first_row=df.iloc[0]
-	for index, rows in df.iterrows():
-		entry1.delete(0,tk.END)
-		entry1.insert(0,str(rows['TICKR']))
-		entry2.delete(0,tk.END)
-		entry2.insert(0,int(rows['Total_Exercise_Time']))
-		entry3.delete(0,tk.END)
-		entry3.insert(0,int(rows['expiration']))
-		entry4.delete(0,tk.END)
-		entry4.insert(0,int(rows['actual_exercise_duration']))
-		entry5.delete(0,tk.END)
-		entry5.insert(0,int(rows['Expected_price']))
-		stc=entry1.get()
-		ep=entry3.get()
-		aed=entry4.get()
-		total_exercise_time=entry2.get()
-		spotprice=entry5.get()
-		option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,spotprice)))
-		text1.set("Option Price")
-		stock_price1.set(int(yf.Ticker(str((stc))).fast_info.last_price))
-		text2.set("Current Stock Price")
-		wb=load_workbook("/Users/harshitraheja/Desktop/Tickr.xlsx")
-		ws=wb.active
-		ws.cell(row=index+2,column=6,value=option_price1.get())
-		ws.cell(row=index+2,column=7,value=stock_price1.get())
-		wb.save("/Users/harshitraheja/Desktop/Tickr.xlsx")
 root=tk.Tk()
 stc=tk.StringVar()
 ep=tk.IntVar()
@@ -128,17 +98,10 @@ def option_price_calculator(stc,ep,aed,total_exercise_time,vol,spotprice):
 	#spotprice=yf.Ticker(str((stc))).fast_info.last_price
 	Current_price=lagrange(y,vt2[int(aed),:], spotprice)
 	return Current_price
-stock_price1=tk.IntVar()
 option_price1=tk.IntVar()
 text1=tk.StringVar()
-text2=tk.StringVar()
-text3=tk.StringVar()
-output_label = tk.Label(root, textvariable=stock_price1, font=("Arial", 14))
-output_label.pack(pady=10)
 output_label2 = tk.Label(root, textvariable=option_price1, font=("Arial", 14))
 output_label2.pack(pady=10)
-output_label3 = tk.Label(root, textvariable=text2, font=("Arial", 14))
-output_label3.pack(pady=10)
 output_label4 = tk.Label(root, textvariable=text1, font=("Arial", 14))
 output_label4.pack(pady=10)
 def submit_data():
@@ -150,8 +113,5 @@ def submit_data():
 	vol=float(entry6.get())
 	option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,vol,float(spotprice))))
 	text1.set("Option Price")
-	stock_price1.set(int(yf.Ticker(str((stc))).fast_info.last_price))
-	text2.set("Current Stock Price")
 button = tk.Button(root, text="Check Option Price", width=30, command=submit_data).pack()
-button2 = tk.Button(root, text="Autofill", width=30, command=autofill_fields).pack()
 root.mainloop()
