@@ -43,12 +43,14 @@ ep=tk.IntVar()
 aed=tk.IntVar()
 total_exercise_time=tk.IntVar()
 spotprice=tk.IntVar()
+vol=tk.IntVar()
 root.title("Call Option Price Calculator")
 tk.Label(root,text="TICKR").pack()
 tk.Label(root,text="Time to exercise(In days from 1st July)").pack()
-tk.Label(root,text="Expiration").pack()
+tk.Label(root,text="Strike Price").pack()
 tk.Label(root,text="Date of actual exercise").pack()
 tk.Label(root,text="Expected price").pack()
+tk.Label(root,text="Volatility").pack()
 entry1=tk.Entry(root,textvariable=stc)
 entry1.pack()
 entry2=tk.Entry(root,textvariable=total_exercise_time)
@@ -59,27 +61,12 @@ entry3.pack()
 entry4.pack()
 entry5=tk.Entry(root,textvariable=spotprice)
 entry5.pack()
-def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time:Object,spotprice: int):
-	data =yf.download(str(stc),start="2026-01-01", end ="2027-07-01")
-	close_prices=(np.zeros(len(data['Close'].to_numpy())))
-	open_prices=(np.zeros(len(data[['Close']].to_numpy())))
-	close_prices[:]=data['Close'].to_numpy()[:,0]
-	open_prices[:]=data['Open'].to_numpy()[:,0]
-	returns=np.zeros(len(close_prices))
-	for i in range(len(returns)):
-		returns[i]=np.log(close_prices[i]/open_prices[i])
-	mean=0
-	for i in range(len(data['Close'].to_numpy())):
-		mean+=returns[i]
-	mean=mean/len(data['Close'].to_numpy())
-
-	variance=0
-	for i in range(len(data['Close'].to_numpy())):
-		variance+= (returns[i]-mean)**2
-	variance=variance/((len(data['Close'].to_numpy()))-1)
-	volatility=np.sqrt(variance)
+entry6=tk.Entry(root,textvariable=vol)
+entry6.pack()
+def option_price_calculator(stc,ep,aed,total_exercise_time,vol,spotprice):
+	volatility=vol
 	r=0.045
-	max_price=2*close_prices[-1]
+	max_price=2*spotprice
 	tet= total_exercise_time
 	time_step=int(tet)
 	price_step=int(tet)
@@ -90,7 +77,7 @@ def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time
 	vi1=0
 	vt2=np.zeros((time_step,price_step))
 	vt3=np.zeros((time_step,price_step))
-	K=yf.Ticker(stc).option_chain(yf.Ticker(str(stc)).options[int(ep)]).calls['strike'][0]
+	K=float(ep)
 	v_i=0
 	vi1=max(price_dif-K,0)
 	vi2=max((2*price_dif)-K,0)
@@ -98,14 +85,14 @@ def option_price_calculator(stc: Object,ep:Object,aed:Object,total_exercise_time
 	x=np.linspace(0,int(total_exercise_time),int(time_step))
 	y=np.linspace(0,max_price,price_step)
 	for j in range(0,price_step-2):
-		a=(0.5*r*(j+1)*time_dif)-(0.5*(volatility**2)*((j+1)**2)*time_dif)
-		b=1+((volatility**2)*((j+1)**2)*time_dif)#+(r*time_dif)
-		c=(-0.5*r*(j+1)*time_dif)-(0.5*(volatility**2)*((j+1)**2)*time_dif)
+		a=(0.5*r*(price_step-j-1)*time_dif)-(0.5*(volatility**2)*((price_step-j-1)**2)*time_dif)
+		b=1+((volatility**2)*((price_step-j-1)**2)*time_dif)#+(r*time_dif)
+		c=(-0.5*r*(price_step-j-1)*time_dif)-(0.5*(volatility**2)*((j+1)**2)*time_dif)
 		d=vt2[:-1,price_step-j-1]
 		e=np.zeros((time_step-1,price_step))
-		e[0,0]=a
-		e[0,1]=b
-		e[0,2]=c
+		e[0,0]=a/(1-r*(time_dif))
+		e[0,1]=b/(1-r*(time_dif))
+		e[0,2]=c/(1-r*(time_dif))
 		for l in range(1,price_step-1):
 			e[l,l-1]=a/(1-r*(time_dif))
 			e[l,l]=b/(1-r*(time_dif))
@@ -155,21 +142,16 @@ output_label3.pack(pady=10)
 output_label4 = tk.Label(root, textvariable=text1, font=("Arial", 14))
 output_label4.pack(pady=10)
 def submit_data():
-	file_name="/Users/harshitraheja/Desktop/Tickr.xlsx"
 	stc=entry1.get()
 	ep=entry3.get()
 	aed=entry4.get()
 	spotprice=entry5.get()
 	total_exercise_time=entry2.get()
-	option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,spotprice)))
+	vol=float(entry6.get())
+	option_price1.set((option_price_calculator(stc,ep,aed,total_exercise_time,vol,float(spotprice))))
 	text1.set("Option Price")
 	stock_price1.set(int(yf.Ticker(str((stc))).fast_info.last_price))
 	text2.set("Current Stock Price")
-	wb=load_workbook("/Users/harshitraheja/Desktop/Tickr.xlsx")
-	ws=wb.active
-	ws.cell(row=2,column=6,value=option_price1.get())
-	ws.cell(row=2,column=7,value=stock_price1.get())
-	wb.save("/Users/harshitraheja/Desktop/Tickr.xlsx")
 button = tk.Button(root, text="Check Option Price", width=30, command=submit_data).pack()
 button2 = tk.Button(root, text="Autofill", width=30, command=autofill_fields).pack()
 root.mainloop()
