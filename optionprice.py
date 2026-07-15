@@ -11,16 +11,16 @@ root=tk.Tk()
 stc=tk.StringVar()
 ep=tk.IntVar()
 aed=tk.IntVar()
-total_exercise_time=tk.IntVar()
+total_exercise_time=tk.DoubleVar()
 spotprice=tk.IntVar()
 vol=tk.IntVar()
 root.title("Call Option Price Calculator")
 tk.Label(root,text="TICKR").pack()
-tk.Label(root,text="Time to exercise(In days from 1st July)").pack()
+tk.Label(root,text="Time to exercise(In DAYS from 1st July)").pack()
 tk.Label(root,text="Strike Price").pack()
-tk.Label(root,text="Date of actual exercise").pack()
+tk.Label(root,text="Period of exercise").pack()
 tk.Label(root,text="Expected price").pack()
-tk.Label(root,text="Volatility").pack()
+tk.Label(root,text="Volatility(Daily)").pack()
 entry1=tk.Entry(root,textvariable=stc)
 entry1.pack()
 entry2=tk.Entry(root,textvariable=total_exercise_time)
@@ -37,11 +37,11 @@ def option_price_calculator(stc,ep,aed,total_exercise_time,vol,spotprice):
 	volatility=vol
 	r=0.045
 	max_price=2*spotprice
-	tet= total_exercise_time
-	time_step=int(tet)
-	price_step=int(tet)
-	time_dif=(int(tet)/(time_step))
-	price_dif=(max_price)/price_step
+	tet= float(total_exercise_time)
+	time_step=100
+	price_step=100
+	time_dif=(int(tet)/(time_step-1))
+	price_dif=(max_price)/(price_step-1)
 	v_i=0
 	vi2=0
 	vi1=0
@@ -52,7 +52,7 @@ def option_price_calculator(stc,ep,aed,total_exercise_time,vol,spotprice):
 	vi1=max(price_dif-K,0)
 	vi2=max((2*price_dif)-K,0)
 	vt2[:,-1]=max_price-K
-	x=np.linspace(0,int(total_exercise_time),int(time_step))
+	x=np.linspace(0,float(total_exercise_time),int(time_step))
 	y=np.linspace(0,max_price,price_step)
 	for j in range(0,price_step-2):
 		a=(0.5*r*(price_step-j-1)*time_dif)-(0.5*(volatility**2)*((price_step-j-1)**2)*time_dif)
@@ -75,28 +75,31 @@ def option_price_calculator(stc,ep,aed,total_exercise_time,vol,spotprice):
 		for i in range(0,time_step-1):
 			vt2[i,price_step-j-2]=max(vt2[i,price_step-j-2],max((price_step-j-2)*price_dif-K,0))
 		vt2[-1,price_step-j-2]=max(((price_step-j-2)*price_dif)-K,0)
-		
-	def lagrange(x,y,stockprice):
+	def lagrange(x1,y1,stockprice):
 		u=1
 		stockprice=float(stockprice)
-		for y2 in range(0,len(x)):
-			u*=(stockprice-x[y2])
-		def l3(x,index):
-			#print(x,'x')
+		for y2 in range(0,len(x1)):
+			if stockprice!=x1[y2]:
+				u*=(stockprice-x1[y2])
+			else:
+				u*=1
+		def l3(x1,index):
 			w=1
-			for m in range(0,len(x)):
+			for m in range(0,len(x1)):
 				if m!=index:
-					w*=1/(x[index]-x[m])
+					w*=1/(x1[index]-x1[m])
 				else:
-					w=w
+					w*=1
 			return w 
 		z1=0
-		for l2 in range(0,len(x)):
-			if stockprice!=x[l2]:
-				z1+=y[l2]*l3(x,l2)*(1/(stockprice-x[l2]))
+		for l2 in range(0,len(x1)):
+			if stockprice!=x1[l2]:
+				z1+=y1[l2]*l3(x1,l2)*(1/(stockprice-x1[l2]))
+			else: 
+				z1+=0
 		return z1*u
-	#spotprice=yf.Ticker(str((stc))).fast_info.last_price
-	Current_price=lagrange(y,vt2[int(aed),:], spotprice)
+
+	Current_price=lagrange(y,vt2[int(aed)-1,:], spotprice)
 	return Current_price
 option_price1=tk.IntVar()
 text1=tk.StringVar()
